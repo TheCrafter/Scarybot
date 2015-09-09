@@ -9,10 +9,10 @@ Features
 --------
 * Connecting to #scaryboxstudios on freenode and replying to ping and pong messages from freenode.
 * Parsing various commsnds and responding to them
-** !gs <search string> -> google search
-** !hs <search string> -> hoogle search
-** !part -> leaves the channel
-** !quit -> shuts down
+  * !gs <search string> -> google search
+  * !hs <search string> -> hoogle search
+  * !part -> leaves the channel
+  * !quit -> shuts down
 
 Building
 --------

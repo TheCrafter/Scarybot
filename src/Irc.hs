@@ -82,10 +82,7 @@ handleResponse _ Nothing = return ()
 handleResponse s (Just r) =
   case r of
   Bot.SendMsg m  -> privMsg s m
-
   Bot.LeaveChan  -> sendCommand s "PART" chan
-
   Bot.JoinChan c -> sendCommand s "JOIN" c
-
   Bot.Exit       -> sendCommand s "QUIT" ":Scarybot, OUT" >> exitSuccess
 

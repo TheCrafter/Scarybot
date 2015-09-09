@@ -5,6 +5,7 @@ module Bot
 ) where
 
 import Data.List
+import Data.List.Split
 import Data.Char (toLower)
 
 data Event = Msg { msg    :: String
@@ -24,10 +25,20 @@ handleEvent (Msg m s) = case m of
 
   "!part" -> Just $ LeaveChan
 
+  -- TODO: Redesign commands
+  ('!' : 'g' : 's' : ' ' : str) ->
+    Just $ SendMsg $ "https://www.google.com/search?q=" ++ formatSearchQuery str
+
   s       -> if isHey s
                 then Just $ SendMsg $ "H" ++ (replicate ((countEInHey s) + 1) 'o')
                 else Nothing
                 
+formatSearchQuery :: String -> String
+formatSearchQuery s = reverse . drop 1 . reverse $ formatted
+  where unwrapped = splitOn " " s
+        addPlus   = map (\str -> [str ++ "+"]) unwrapped
+        formatted = concat . concat $ addPlus
+
 
 isHey :: String -> Bool
 isHey s =

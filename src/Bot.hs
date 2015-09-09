@@ -7,6 +7,9 @@ module Bot
 import Data.List
 import Data.List.Split
 import Data.Char (toLower)
+import Data.ByteString.Char8 (pack, unpack)
+import Data.ByteString.Base16 (encode)
+import Network.HTTP.Base (urlEncode)
 
 data Event = Msg { msg    :: String
                  , sender :: String }
@@ -51,7 +54,9 @@ handleCommand (Command command Nothing) =
 
 handleCommand (Command command (Just arg)) =
   case command of
-  "gs" -> Just $ SendMsg $ "https://www.google.com/search?q=" ++ formatSearchQuery arg
+  "gs" -> Just $ SendMsg $ getSearchUrl "https://www.google.com/search?q=" arg
+
+  "hs" -> Just $ SendMsg $ getSearchUrl "https://www.haskell.org/hoogle/?hoogle=" arg
 
 -----------------------------------
 -- Used for Heeey-Hooo
@@ -69,8 +74,6 @@ countEInHey s = (length s) - 2
 -----------------------------------
 -- Helper functions
 -----------------------------------
-formatSearchQuery :: String -> String
-formatSearchQuery s = reverse . drop 1 . reverse $ formatted
-  where unwrapped = splitOn " " s
-        addPlus   = map (\str -> [str ++ "+"]) unwrapped
-        formatted = concat . concat $ addPlus
+getSearchUrl :: String -> String -> String
+getSearchUrl basicUrl str = basicUrl ++ urlEncode str
+

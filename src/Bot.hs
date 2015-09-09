@@ -1,4 +1,8 @@
-module Bot where
+module Bot
+( Event (..)
+, Response (..)
+, handleEvent
+) where
 
 import Data.List
 import Data.Char (toLower)

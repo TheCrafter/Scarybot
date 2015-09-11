@@ -47,14 +47,26 @@ connectToServer = do
   liftIO $ connect newSock (addrAddress addr)
   put $ IrcCon newSock
 
-sendCommand :: String -> String -> IrcStateT ()
-sendCommand cmd str = do
+sendToSock :: String -> IrcStateT ()
+sendToSock str = do
   state <- get
   let socket = sock state
+  let bytesToSend = length str
+  
+  sended <- liftIO $ send socket str
+
+  -- Check if all data has been sent
+  let remainingBytes = bytesToSend - sended
+  if remainingBytes > 0
+     then sendToSock $ reverse . take remainingBytes . reverse $ str
+     else return ()
+
+sendCommand :: String -> String -> IrcStateT ()
+sendCommand cmd str = do
   let msgToSend = cmd ++ " " ++ str ++ "\r\n"
   -- Print what we send for debug purposes. TODO: Remove it
   liftIO $ putStr $ ">" ++ msgToSend
-  liftIO $ send socket msgToSend
+  sendToSock msgToSend
   return ()
 
 ircConnect :: IrcStateT ()

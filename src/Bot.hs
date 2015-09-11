@@ -7,8 +7,6 @@ module Bot
 import Data.List
 import Data.List.Split
 import Data.Char (toLower)
-import Data.ByteString.Char8 (pack, unpack)
-import Data.ByteString.Base16 (encode)
 import Network.HTTP.Base (urlEncode)
 
 data Event = Msg { msg    :: String

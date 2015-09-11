@@ -1,4 +1,4 @@
-module Irc
+module Irc.Core
 ( IrcStateT
 , getDefaultState
 , connectToServer
@@ -6,34 +6,30 @@ module Irc
 , ircRecv
 ) where
 
-import Network.Socket
+import Network.Socket (Socket, recv)
 import Control.Monad (forever)
 import Data.List (isPrefixOf, takeWhile)
 import System.Exit (exitSuccess)
 import Control.Monad.Trans.State.Lazy
 import Control.Monad.IO.Class (liftIO)
 import qualified Bot
-
------------------------------------------------
--- Config --
------------------------------------------------
-server :: HostName
-server = "irc.freenode.net"
-
-port   = "6667"
-chan   = "#scaryboxstudios"
-nick   = "Scarybot"
-realname = "ScaryBox Studios IRC Bot"
------------------------------------------------
+import qualified Irc.Network as IrcNet
 
 data IrcCon = IrcCon { sock :: Socket }
 
 type IrcStateT a = StateT IrcCon IO a
 
+-----------------------------------------------
+-- Config --
+-----------------------------------------------
+chan   = "#scaryboxstudios"
+nick   = "Scarybot"
+realname = "ScaryBox Studios IRC Bot"
+-----------------------------------------------
+
 getDefaultState :: IO IrcCon
 getDefaultState = do
-  addr <- getAddrInfo'
-  newSock <- socket (addrFamily addr) Stream defaultProtocol
+  newSock <- liftIO $ IrcNet.getDefaultSocket
   return $ IrcCon newSock
 
 -----------------------------------
@@ -43,35 +39,22 @@ connectToServer :: IrcStateT ()
 connectToServer = do
   state <- get
   let newSock = sock state
-  addr <- liftIO $ getAddrInfo'
-  liftIO $ connect newSock (addrAddress addr)
+  liftIO $ IrcNet.connectToServer newSock
   put $ IrcCon newSock
-
-sendToSock :: String -> IrcStateT ()
-sendToSock str = do
-  state <- get
-  let socket = sock state
-  let bytesToSend = length str
-  
-  sended <- liftIO $ send socket str
-
-  -- Check if all data has been sent
-  let remainingBytes = bytesToSend - sended
-  if remainingBytes > 0
-     then sendToSock $ reverse . take remainingBytes . reverse $ str
-     else return ()
 
 sendCommand :: String -> String -> IrcStateT ()
 sendCommand cmd str = do
+  state <- get
+  let socket = sock state
   let msgToSend = cmd ++ " " ++ str ++ "\r\n"
   -- Print what we send for debug purposes. TODO: Remove it
   liftIO $ putStr $ ">" ++ msgToSend
-  sendToSock msgToSend
+  liftIO $ IrcNet.sendToSock socket msgToSend
   return ()
 
 ircConnect :: IrcStateT ()
 ircConnect = do
-  mapM (\(s1, s2) -> sendCommand s1 s2 )
+  mapM (\(s1, s2) -> sendCommand s1 s2)
     [ ("NICK", nick)
     , ("USER", nick ++ " 0 * :" ++ realname)
     , ("JOIN", chan)
@@ -125,8 +108,3 @@ handleMsg s =
 -- Get rid of the first part which not containts the actual message
 cleanIrcMsg :: String -> String
 cleanIrcMsg = drop 1 . dropWhile (/= ':') . drop 1
-
-getAddrInfo' :: IO AddrInfo
-getAddrInfo' = do
-  addrInfo <- getAddrInfo Nothing (Just server) (Just port)
-  return $ head addrInfo

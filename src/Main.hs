@@ -1,7 +1,7 @@
 module Main where
 
 import Control.Monad.Trans.State.Lazy (evalStateT)
-import Irc
+import Irc.Core
 
 runIrcBot :: IrcStateT ()
 runIrcBot = do
